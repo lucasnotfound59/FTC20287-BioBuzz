@@ -45,3 +45,9 @@ python3 tools/FTC-Knowledge-Bank/.agents/skills/ftckb-integrate/scripts/verify.p
 ```
 
 Compilation does not prove Android Studio Sync on another computer, Control Hub deployment, or physical robot correctness.
+
+## FTC Knowledge Bank status
+
+This project pins FTC Knowledge Bank commit `105c8e47ddee734365af50dd2305caa13646ab21` for team 20287, season 2026–2027, and the `command-based` profile.
+
+The installation and current-worktree verification pass. A full branch-diff check reports `shared.limelight-check-result-validity` and `shared.limelight-enforce-freshness-policy` against `DriveSubsystem.java`, even though TeamCode contains no Limelight result read. The pinned rules currently apply their required regular expressions to every added Java file. Do not add meaningless `isValid()` or timestamp calls to silence this known false positive; report the two rule IDs until the Knowledge Bank narrows their applicability.
