@@ -8,6 +8,7 @@ This module contains the team-owned command framework for the 2026–2027 BIOBUZ
 - `drive`: pure mecanum math, drivetrain ownership, and the default TeleOp drive command
 - `robot`: centralized hardware names and initialization
 - `opmodes`: Driver Station entry points
+- `testing`: Driver Station diagnostic OpModes
 
 ## Driver controls
 
@@ -36,15 +37,22 @@ Resolve FTC Knowledge Bank rules before editing:
 python3 tools/FTC-Knowledge-Bank/.agents/skills/ftckb-integrate/scripts/project.py resolve --project .
 ```
 
-After editing, run the unit tests, Android build, project check, and integration verification with JDK 21 and a configured Android SDK:
+After editing, run the Android build, project check, and integration verification with JDK 21 and a configured Android SDK:
 
 ```bash
-./gradlew :TeamCode:testDebugUnitTest :TeamCode:assembleDebug
+./gradlew :TeamCode:assembleDebug
 python3 tools/FTC-Knowledge-Bank/.agents/skills/ftckb-integrate/scripts/project.py check --project .
 python3 tools/FTC-Knowledge-Bank/.agents/skills/ftckb-integrate/scripts/verify.py --project .
 ```
 
 Compilation does not prove Android Studio Sync on another computer, Control Hub deployment, or physical robot correctness.
+
+## Driver Station tests
+
+- `TEST - Framework Self-Test` uses no robot hardware. Press PLAY and confirm every telemetry line reports PASS.
+- `TEST - Drive Motors` requires the configured drivetrain. Lift the robot first, then hold exactly one face button: Y front-left, B front-right, X back-left, or A back-right. Power is limited to 0.15 and releasing the button stops every wheel.
+
+These tests live in `org.firstinspires.ftc.teamcode.testing` and use no JUnit dependency. Physical motor names, directions, and stop behavior remain unverified until the drive test is completed on the current robot.
 
 ## FTC Knowledge Bank status
 
