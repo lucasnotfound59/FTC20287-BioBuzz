@@ -54,7 +54,18 @@ public final class CommandScheduler {
             owners.put(requirement, command);
         }
         scheduled.add(command);
-        command.initialize();
+        try {
+            command.initialize();
+        } catch (RuntimeException initializationFailure) {
+            scheduled.remove(command);
+            owners.entrySet().removeIf(entry -> entry.getValue() == command);
+            try {
+                command.end(true);
+            } catch (RuntimeException cleanupFailure) {
+                initializationFailure.addSuppressed(cleanupFailure);
+            }
+            throw initializationFailure;
+        }
     }
 
     public void run() {
@@ -65,14 +76,18 @@ public final class CommandScheduler {
         }
 
         for (Map.Entry<Subsystem, Command> entry : new ArrayList<>(defaults.entrySet())) {
-            if (!owners.containsKey(entry.getKey()) && !scheduled.contains(entry.getValue())) {
+            if (!scheduled.contains(entry.getValue())
+                    && requirementsAreFree(entry.getValue())) {
                 schedule(entry.getValue());
             }
         }
 
         for (Command command : new ArrayList<>(scheduled)) {
+            if (!scheduled.contains(command)) {
+                continue;
+            }
             command.execute();
-            if (command.isFinished()) {
+            if (scheduled.contains(command) && command.isFinished()) {
                 finish(command, false);
             }
         }
@@ -85,8 +100,16 @@ public final class CommandScheduler {
     }
 
     public void cancelAll() {
+        RuntimeException failure = null;
         for (Command command : new ArrayList<>(scheduled)) {
-            finish(command, true);
+            try {
+                finish(command, true);
+            } catch (RuntimeException cleanupFailure) {
+                failure = appendFailure(failure, cleanupFailure);
+            }
+        }
+        if (failure != null) {
+            throw failure;
         }
     }
 
@@ -98,14 +121,26 @@ public final class CommandScheduler {
         if (shutdown) {
             return;
         }
-        cancelAll();
+        RuntimeException failure = null;
+        try {
+            cancelAll();
+        } catch (RuntimeException cleanupFailure) {
+            failure = appendFailure(failure, cleanupFailure);
+        }
         for (Subsystem subsystem : new ArrayList<>(subsystems)) {
-            subsystem.stop();
+            try {
+                subsystem.stop();
+            } catch (RuntimeException cleanupFailure) {
+                failure = appendFailure(failure, cleanupFailure);
+            }
         }
         defaults.clear();
         owners.clear();
         subsystems.clear();
         shutdown = true;
+        if (failure != null) {
+            throw failure;
+        }
     }
 
     private void finish(Command command, boolean interrupted) {
@@ -118,6 +153,25 @@ public final class CommandScheduler {
         if (shutdown) {
             throw new IllegalStateException("scheduler is shut down");
         }
+    }
+
+    private boolean requirementsAreFree(Command command) {
+        for (Subsystem requirement : command.getRequirements()) {
+            if (owners.containsKey(requirement)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static RuntimeException appendFailure(
+            RuntimeException firstFailure,
+            RuntimeException nextFailure) {
+        if (firstFailure == null) {
+            return nextFailure;
+        }
+        firstFailure.addSuppressed(nextFailure);
+        return firstFailure;
     }
 
     private static void requireNonNull(Object value, String name) {

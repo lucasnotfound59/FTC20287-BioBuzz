@@ -34,10 +34,14 @@ public final class DriveSubsystem implements Subsystem {
 
     @Override
     public void stop() {
-        frontLeft.setPower(0.0);
-        frontRight.setPower(0.0);
-        backLeft.setPower(0.0);
-        backRight.setPower(0.0);
+        RuntimeException failure = null;
+        failure = stopMotor(frontLeft, failure);
+        failure = stopMotor(frontRight, failure);
+        failure = stopMotor(backLeft, failure);
+        failure = stopMotor(backRight, failure);
+        if (failure != null) {
+            throw failure;
+        }
     }
 
     private static double clamp(double power) {
@@ -49,5 +53,20 @@ public final class DriveSubsystem implements Subsystem {
             throw new IllegalArgumentException(name + " cannot be null");
         }
         return motor;
+    }
+
+    private static RuntimeException stopMotor(
+            DcMotorEx motor,
+            RuntimeException firstFailure) {
+        try {
+            motor.setPower(0.0);
+            return firstFailure;
+        } catch (RuntimeException nextFailure) {
+            if (firstFailure == null) {
+                return nextFailure;
+            }
+            firstFailure.addSuppressed(nextFailure);
+            return firstFailure;
+        }
     }
 }
