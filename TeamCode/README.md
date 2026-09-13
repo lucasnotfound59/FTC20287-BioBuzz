@@ -50,7 +50,7 @@ Compilation does not prove Android Studio Sync on another computer, Control Hub 
 ## Driver Station tests
 
 - `TEST - Framework Self-Test` uses no robot hardware. Press PLAY and confirm every telemetry line reports PASS.
-- `TEST - Drive Motors` requires the configured drivetrain. Lift the robot first, then hold exactly one face button: Y front-left, B front-right, X back-left, or A back-right. Power is limited to 0.15 and releasing the button stops every wheel.
+- `TEST - Drive Motors` requires the configured drivetrain. Lift the robot first, then hold exactly one face button: Y front-left, B front-right, X back-left, or A back-right. Power is limited to 0.15 and releasing the button commands every wheel to stop. An initialization, drive, or stop exception latches a FAULT and blocks further nonzero output until STOP and re-INIT; subsequent loops keep attempting to stop an available drivetrain. A communication failure can prevent a motor from receiving the stop command.
 
 These tests live in `org.firstinspires.ftc.teamcode.testing` and use no JUnit dependency. Physical motor names, directions, and stop behavior remain unverified until the drive test is completed on the current robot.
 

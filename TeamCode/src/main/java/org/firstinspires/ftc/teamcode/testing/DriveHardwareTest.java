@@ -15,18 +15,21 @@ public final class DriveHardwareTest extends OpMode {
 
     @Override
     public void init() {
+        drive = null;
+        error = null;
         try {
             drive = RobotHardware.createDrive(hardwareMap);
         } catch (RuntimeException failure) {
-            error = failure.getMessage();
+            latchFault("INIT", failure);
         }
         showInstructions("STOPPED");
     }
 
     @Override
     public void loop() {
-        if (drive == null) {
-            showInstructions("ERROR: " + error);
+        if (error != null || drive == null) {
+            safeStop();
+            showInstructions("FAULT: drive unavailable; re-INIT required");
             return;
         }
 
@@ -35,8 +38,10 @@ public final class DriveHardwareTest extends OpMode {
                 + (gamepad1.x ? 1 : 0)
                 + (gamepad1.a ? 1 : 0);
         if (pressed != 1) {
-            safeStop();
-            showInstructions(pressed == 0 ? "STOPPED" : "STOPPED: hold one button only");
+            boolean stopped = safeStop();
+            showInstructions(stopped
+                    ? (pressed == 0 ? "STOPPED" : "STOPPED: hold one button only")
+                    : "FAULT: stop failed; re-INIT required");
             return;
         }
 
@@ -60,27 +65,38 @@ public final class DriveHardwareTest extends OpMode {
             drive.drive(powers);
             showInstructions("RUNNING: " + selected);
         } catch (RuntimeException failure) {
-            error = failure.getMessage();
+            latchFault("DRIVE", failure);
             safeStop();
-            showInstructions("ERROR: " + error);
+            showInstructions("FAULT: drive failed; re-INIT required");
         }
     }
 
-    private void safeStop() {
+    private boolean safeStop() {
         if (drive == null) {
-            return;
+            return false;
         }
         try {
+            // DriveSubsystem.stop attempts every motor even when one write fails.
             drive.stop();
+            return true;
         } catch (RuntimeException failure) {
-            error = failure.getMessage();
+            latchFault("STOP", failure);
+            return false;
+        }
+    }
+
+    private void latchFault(String operation, RuntimeException failure) {
+        if (error == null) {
+            String message = failure.getMessage();
+            error = operation + ": " + failure.getClass().getName()
+                    + (message == null || message.trim().isEmpty() ? "" : " - " + message);
         }
     }
 
     private void showInstructions(String state) {
         telemetry.clearAll();
         telemetry.addLine("LIFT THE ROBOT: all wheels must be clear.");
-        telemetry.addData("State", state);
+        telemetry.addData("State", error == null ? state : "FAULT: " + error);
         telemetry.addData("Power", TEST_POWER);
         telemetry.addLine("Hold exactly one button:");
         telemetry.addLine("Y front-left | B front-right");
@@ -90,13 +106,14 @@ public final class DriveHardwareTest extends OpMode {
         telemetry.addData("back-left name", RobotConfig.BACK_LEFT_DRIVE);
         telemetry.addData("back-right name", RobotConfig.BACK_RIGHT_DRIVE);
         if (error != null) {
-            telemetry.addData("Last error", error);
+            telemetry.addLine("Fault latched: STOP and re-INIT before retrying.");
         }
         telemetry.update();
     }
 
     @Override
     public void stop() {
-        safeStop();
+        boolean stopped = safeStop();
+        showInstructions(stopped ? "STOPPED" : "FAULT: drive unavailable or stop failed");
     }
 }
