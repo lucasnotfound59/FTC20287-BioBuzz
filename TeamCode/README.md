@@ -31,6 +31,22 @@ The command reads these values live during every scheduler cycle. Input deadband
 
 `20287 Precision TeleOp` adds hold-to-slow control: hold gamepad 1 LB for a maximum 0.30 wheel-power limit (or the configured normal limit if lower), and release it to restore `DRIVE_POWER_SCALE`. The limit is applied after mecanum normalization. `20287 Main TeleOp` keeps its existing controls and fixed-scale behavior.
 
+### OctoQuad headless drive
+
+Select `20287 Headless TeleOp`. This requires an **OctoQuad FTC Edition MK2** with an IMU and SDK-compatible firmware major 3, configured under the I2C hardware name `octoquad` (`RobotConfig.OCTOQUAD_NAME`). MK1 cannot provide this heading source. No new library is required.
+
+- Left stick: translate relative to the field reference, regardless of robot facing.
+- Right stick X: turn; LB: hold for the existing 30% wheel-output limit.
+- Y: press once to make the robot's current front the new field-forward direction. This changes a software offset rather than recalibrating the sensor.
+
+Keep the robot stationary during INIT calibration and wait for `RUNNING`. Point its front toward your chosen field-forward direction before START; the first valid active sample establishes zero heading. OctoQuad must be mounted in one of its supported axis-orthogonal orientations; it detects the vertical IMU axis automatically, so Control Hub mounting parameters are not used. Heading calibration/scale and physical performance still need verification on this robot.
+
+The program uses only `heading_rad`; it preserves existing OctoQuad encoder direction, pod scale/offset, and heading-scalar settings, does not save flash, and resets/calibrates its localizer during INIT. It does not claim validated X/Y odometry. Each cycle requires a valid CRC, `RUNNING` status and finite heading; otherwise all wheel commands are zero. A reported missing IMU or communication exception exits through the normal scheduler cleanup.
+
+With wheels raised, verify zero-heading forward/strafe/turn, then rotate the robot counterclockwise 90 degrees by hand and confirm heading increases about 90 degrees and field-forward input produces robot-right translation. Verify Y reset, LB scaling and STOP before driving on the floor. Existing motor names/directions in `RobotConfig` still need to match your robot.
+
+API references: the bundled `SensorOctoQuadLocalization` SDK sample and [DigitalChickenLabs localizer documentation](https://github.com/DigitalChickenLabs/OctoQuad/tree/master/documentation).
+
 ## Before running on a robot
 
 1. Match the four names in `RobotConfig` to the Robot Controller configuration.

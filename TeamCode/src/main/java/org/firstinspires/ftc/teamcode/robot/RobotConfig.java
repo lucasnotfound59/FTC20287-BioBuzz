@@ -12,6 +12,7 @@ public final class RobotConfig {
     public static final String FRONT_RIGHT_DRIVE = "front_right_drive";
     public static final String BACK_LEFT_DRIVE = "back_left_drive";
     public static final String BACK_RIGHT_DRIVE = "back_right_drive";
+    public static final String OCTOQUAD_NAME="octoquad";
 
     // UNVERIFIED FOR THE CURRENT DRIVETRAIN: lift the robot before checking wheel directions.
     public static final DcMotorSimple.Direction LEFT_DRIVE_DIRECTION =

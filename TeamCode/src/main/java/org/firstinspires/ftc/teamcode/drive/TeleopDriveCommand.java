@@ -12,6 +12,7 @@ public final class TeleopDriveCommand extends CommandBase {
     private final double deadband;
     private final double scale;
     private final DoubleSupplier outputScale;
+    private final DoubleSupplier headingRadians;
 
     public TeleopDriveCommand(
             DriveSubsystem drive,
@@ -20,7 +21,7 @@ public final class TeleopDriveCommand extends CommandBase {
             DoubleSupplier turn,
             double deadband,
             double scale) {
-        this(drive, forward, strafe, turn, deadband, scale, null);
+        this(drive, forward, strafe, turn, deadband, scale, null, null);
     }
 
     /** Live wheel-output limit, applied after mecanum normalization. */
@@ -31,7 +32,20 @@ public final class TeleopDriveCommand extends CommandBase {
             DoubleSupplier turn,
             double deadband,
             DoubleSupplier outputScale) {
-        this(drive, forward, strafe, turn, deadband, 1.0, requireScaleSupplier(outputScale));
+        this(drive, forward, strafe, turn, deadband, 1.0, requireScaleSupplier(outputScale), null);
+    }
+
+    /** Field-centric mode; a nonfinite heading stops output until a valid reading arrives. */
+    public TeleopDriveCommand(
+            DriveSubsystem drive,
+            DoubleSupplier forward,
+            DoubleSupplier strafe,
+            DoubleSupplier turn,
+            double deadband,
+            DoubleSupplier outputScale,
+            DoubleSupplier headingRadians) {
+        this(drive, forward, strafe, turn, deadband, 1.0,
+                requireScaleSupplier(outputScale), requireHeadingSupplier(headingRadians));
     }
 
     private TeleopDriveCommand(
@@ -41,7 +55,8 @@ public final class TeleopDriveCommand extends CommandBase {
             DoubleSupplier turn,
             double deadband,
             double scale,
-            DoubleSupplier outputScale) {
+            DoubleSupplier outputScale,
+            DoubleSupplier headingRadians) {
         if (drive == null || forward == null || strafe == null || turn == null) {
             throw new IllegalArgumentException("drive and input suppliers cannot be null");
         }
@@ -59,6 +74,7 @@ public final class TeleopDriveCommand extends CommandBase {
         this.deadband = deadband;
         this.scale = scale;
         this.outputScale = outputScale;
+        this.headingRadians=headingRadians;
         addRequirements(drive);
     }
 
@@ -72,7 +88,14 @@ public final class TeleopDriveCommand extends CommandBase {
             double forwardValue=applyDeadband(forward.getAsDouble())*scale;
             double strafeValue=applyDeadband(strafe.getAsDouble())*scale;
             double turnValue=applyDeadband(turn.getAsDouble())*scale;
-            WheelPowers powers=MecanumMixer.mix(forwardValue, strafeValue, turnValue);
+            double heading=headingRadians == null ? 0.0 : headingRadians.getAsDouble();
+            if (!Double.isFinite(heading)) {
+                drive.stop();
+                return;
+            }
+            WheelPowers powers=headingRadians == null
+                    ? MecanumMixer.mix(forwardValue, strafeValue, turnValue)
+                    : MecanumMixer.mixFieldCentric(forwardValue, strafeValue, turnValue, heading);
             drive.drive(new WheelPowers(
                     powers.frontLeft*limit, powers.frontRight*limit,
                     powers.backLeft*limit, powers.backRight*limit));
@@ -96,6 +119,13 @@ public final class TeleopDriveCommand extends CommandBase {
     private static DoubleSupplier requireScaleSupplier(DoubleSupplier supplier) {
         if (supplier == null) {
             throw new IllegalArgumentException("output scale supplier cannot be null");
+        }
+        return supplier;
+    }
+
+    private static DoubleSupplier requireHeadingSupplier(DoubleSupplier supplier) {
+        if (supplier == null) {
+            throw new IllegalArgumentException("heading supplier cannot be null");
         }
         return supplier;
     }

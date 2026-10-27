@@ -4,11 +4,18 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.hardware.digitalchickenlabs.OctoQuad;
 import org.firstinspires.ftc.teamcode.drive.DriveSubsystem;
+import org.firstinspires.ftc.teamcode.drive.OctoQuadHeadingSubsystem;
 
 /** Creates configured SDK hardware without exposing hardware lookup to commands. */
 public final class RobotHardware {
     private RobotHardware() {
+    }
+
+    public static OctoQuadHeadingSubsystem createOctoQuadHeading(HardwareMap hardwareMap) {
+        return new OctoQuadHeadingSubsystem(
+                hardwareMap.get(OctoQuad.class, RobotConfig.OCTOQUAD_NAME));
     }
 
     public static DriveSubsystem createDrive(HardwareMap hardwareMap) {
