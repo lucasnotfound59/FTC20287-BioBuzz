@@ -21,4 +21,5 @@ public final class RobotConfig {
 
     public static final double DRIVE_DEADBAND = 0.05;
     public static final double DRIVE_POWER_SCALE = 1.0;
+    public static final double SLOW_DRIVE_POWER_SCALE=0.30;
 }

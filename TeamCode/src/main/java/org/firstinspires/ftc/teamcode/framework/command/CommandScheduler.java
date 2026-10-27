@@ -56,13 +56,15 @@ public final class CommandScheduler {
         scheduled.add(command);
         try {
             command.initialize();
-        } catch (RuntimeException initializationFailure) {
+        } catch (RuntimeException | Error initializationFailure) {
             scheduled.remove(command);
             owners.entrySet().removeIf(entry -> entry.getValue() == command);
             try {
                 command.end(true);
-            } catch (RuntimeException cleanupFailure) {
-                initializationFailure.addSuppressed(cleanupFailure);
+            } catch (RuntimeException | Error cleanupFailure) {
+                if (initializationFailure != cleanupFailure) {
+                    initializationFailure.addSuppressed(cleanupFailure);
+                }
             }
             throw initializationFailure;
         }
@@ -100,16 +102,16 @@ public final class CommandScheduler {
     }
 
     public void cancelAll() {
-        RuntimeException failure = null;
+        Throwable failure = null;
         for (Command command : new ArrayList<>(scheduled)) {
             try {
                 finish(command, true);
-            } catch (RuntimeException cleanupFailure) {
+            } catch (RuntimeException | Error cleanupFailure) {
                 failure = appendFailure(failure, cleanupFailure);
             }
         }
         if (failure != null) {
-            throw failure;
+            rethrow(failure);
         }
     }
 
@@ -121,16 +123,16 @@ public final class CommandScheduler {
         if (shutdown) {
             return;
         }
-        RuntimeException failure = null;
+        Throwable failure = null;
         try {
             cancelAll();
-        } catch (RuntimeException cleanupFailure) {
+        } catch (RuntimeException | Error cleanupFailure) {
             failure = appendFailure(failure, cleanupFailure);
         }
         for (Subsystem subsystem : new ArrayList<>(subsystems)) {
             try {
                 subsystem.stop();
-            } catch (RuntimeException cleanupFailure) {
+            } catch (RuntimeException | Error cleanupFailure) {
                 failure = appendFailure(failure, cleanupFailure);
             }
         }
@@ -139,7 +141,7 @@ public final class CommandScheduler {
         subsystems.clear();
         shutdown = true;
         if (failure != null) {
-            throw failure;
+            rethrow(failure);
         }
     }
 
@@ -164,14 +166,23 @@ public final class CommandScheduler {
         return true;
     }
 
-    private static RuntimeException appendFailure(
-            RuntimeException firstFailure,
-            RuntimeException nextFailure) {
+    private static Throwable appendFailure(
+            Throwable firstFailure,
+            Throwable nextFailure) {
         if (firstFailure == null) {
             return nextFailure;
         }
-        firstFailure.addSuppressed(nextFailure);
+        if (firstFailure != nextFailure) {
+            firstFailure.addSuppressed(nextFailure);
+        }
         return firstFailure;
+    }
+
+    private static void rethrow(Throwable failure) {
+        if (failure instanceof RuntimeException) {
+            throw (RuntimeException) failure;
+        }
+        throw (Error) failure;
     }
 
     private static void requireNonNull(Object value, String name) {

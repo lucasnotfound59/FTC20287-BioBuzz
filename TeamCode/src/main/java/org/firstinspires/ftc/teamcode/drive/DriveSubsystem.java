@@ -34,13 +34,16 @@ public final class DriveSubsystem implements Subsystem {
 
     @Override
     public void stop() {
-        RuntimeException failure = null;
+        Throwable failure = null;
         failure = stopMotor(frontLeft, failure);
         failure = stopMotor(frontRight, failure);
         failure = stopMotor(backLeft, failure);
         failure = stopMotor(backRight, failure);
+        if (failure instanceof RuntimeException) {
+            throw (RuntimeException) failure;
+        }
         if (failure != null) {
-            throw failure;
+            throw (Error) failure;
         }
     }
 
@@ -55,17 +58,19 @@ public final class DriveSubsystem implements Subsystem {
         return motor;
     }
 
-    private static RuntimeException stopMotor(
+    private static Throwable stopMotor(
             DcMotorEx motor,
-            RuntimeException firstFailure) {
+            Throwable firstFailure) {
         try {
             motor.setPower(0.0);
             return firstFailure;
-        } catch (RuntimeException nextFailure) {
+        } catch (RuntimeException | Error nextFailure) {
             if (firstFailure == null) {
                 return nextFailure;
             }
-            firstFailure.addSuppressed(nextFailure);
+            if (firstFailure != nextFailure) {
+                firstFailure.addSuppressed(nextFailure);
+            }
             return firstFailure;
         }
     }

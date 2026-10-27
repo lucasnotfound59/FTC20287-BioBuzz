@@ -6,15 +6,15 @@
   "season": "2026-2027",
   "source": {
     "repository": "https://github.com/lucasnotfound59/FTC-Knowledge-Bank.git",
-    "ref": "105c8e47ddee734365af50dd2305caa13646ab21",
-    "commit": "105c8e47ddee734365af50dd2305caa13646ab21",
+    "ref": "5b652e8111769bfe259234d8f99e14f62aa549db",
+    "commit": "5b652e8111769bfe259234d8f99e14f62aa549db",
     "path": "tools/FTC-Knowledge-Bank"
   },
   "profiles": [
     "command-based"
   ],
   "managedFiles": {
-    ".agents/skills/ftc-knowledge-bank/SKILL.md": "72b14da2a783c026d36b19c49b00ee370dc458a461d2c0a5bb77f21583281d11",
-    "AGENTS.md#ftckb": "e8d185612d809cfd3edcdf185d9d0f624cd53c635312bd2679fd3a3ce33d9844"
+    ".agents/skills/ftc-knowledge-bank/SKILL.md": "4ad91438a7f6f8d185a8dab4e312e8a198b28816ffe6cdaaf305e69a1f6d183e",
+    "AGENTS.md#ftckb": "1378eb05eff3304a48d5237c4c7a04586ee986251bd602d276e6c058fa479024"
   }
 }
