@@ -35,15 +35,15 @@ The command reads these values live during every scheduler cycle. Input deadband
 
 Select `20287 Headless TeleOp`. This requires an **OctoQuad FTC Edition MK2** with an IMU and SDK-compatible firmware major 3, configured under the I2C hardware name `octoquad` (`RobotConfig.OCTOQUAD_NAME`). MK1 cannot provide this heading source. No new library is required.
 
-- Left stick: translate relative to the field reference, regardless of robot facing.
+- Left stick: translate relative to the direction the robot faced at START, regardless of its current facing. After a 90-degree turn, stick-left still moves toward the driver's original left, and stick-forward-left still moves toward the driver's original forward-left.
 - Right stick X: turn; LB: hold for the existing 30% wheel-output limit.
-- Y: press once to make the robot's current front the new field-forward direction. This changes a software offset rather than recalibrating the sensor.
+- The START reference stays fixed for the entire run; no gamepad button changes it.
 
-Keep the robot stationary during INIT calibration and wait for `RUNNING`. Point its front toward your chosen field-forward direction before START; the first valid active sample establishes zero heading. OctoQuad must be mounted in one of its supported axis-orthogonal orientations; it detects the vertical IMU axis automatically, so Control Hub mounting parameters are not used. Heading calibration/scale and physical performance still need verification on this robot.
+Keep the robot stationary during INIT calibration and wait for `RUNNING`. Point its front toward the driver's chosen forward direction before START. The START hook reads a fresh valid OctoQuad packet and locks that heading before any drive command runs; if it is not ready, the OpMode exits with motors stopped so a later robot rotation cannot silently become the reference. Directional controls follow this fixed starting view; they do not track the driver's subsequent movement or turning. OctoQuad must be mounted in one of its supported axis-orthogonal orientations; it detects the vertical IMU axis automatically, so Control Hub mounting parameters are not used. Heading calibration/scale and physical performance still need verification on this robot.
 
 The program uses only `heading_rad`; it preserves existing OctoQuad encoder direction, pod scale/offset, and heading-scalar settings, does not save flash, and resets/calibrates its localizer during INIT. It does not claim validated X/Y odometry. Each cycle requires a valid CRC, `RUNNING` status and finite heading; otherwise all wheel commands are zero. A reported missing IMU or communication exception exits through the normal scheduler cleanup.
 
-With wheels raised, verify zero-heading forward/strafe/turn, then rotate the robot counterclockwise 90 degrees by hand and confirm heading increases about 90 degrees and field-forward input produces robot-right translation. Verify Y reset, LB scaling and STOP before driving on the floor. Existing motor names/directions in `RobotConfig` still need to match your robot.
+With wheels raised, verify zero-heading forward/strafe/turn, then rotate the robot counterclockwise 90 degrees by hand and confirm heading increases about 90 degrees and stick-left produces robot-forward output, while stick-forward-left produces robot-forward-right output. Both are the original driver's left/forward-left directions. Repeat at 180 degrees and verify LB scaling and STOP before driving on the floor. Existing motor names/directions in `RobotConfig` still need to match your robot.
 
 API references: the bundled `SensorOctoQuadLocalization` SDK sample and [DigitalChickenLabs localizer documentation](https://github.com/DigitalChickenLabs/OctoQuad/tree/master/documentation).
 

@@ -8,7 +8,7 @@ public final class OctoQuadHeadingSubsystem implements Subsystem {
     private final OctoQuad octoquad;
     private final OctoQuad.LocalizerDataBlock data=new OctoQuad.LocalizerDataBlock();
     private boolean valid;
-    private double zeroRadians=Double.NaN;
+    private double startHeadingRadians=Double.NaN;
     private int badCrcPackets;
 
     public OctoQuadHeadingSubsystem(OctoQuad octoquad) {
@@ -40,23 +40,25 @@ public final class OctoQuadHeadingSubsystem implements Subsystem {
         }
     }
 
-    /** The first usable drive-cycle sample defines field forward; Y can redefine it later. */
+    /** Returns rotation from the fixed START direction; reading never changes the reference. */
     public double getHeadingRadians() {
-        if (!valid) {
+        if (!valid || !Double.isFinite(startHeadingRadians)) {
             return Double.NaN;
         }
-        if (!Double.isFinite(zeroRadians)) {
-            zeroRadians=data.heading_rad;
-        }
-        double heading=data.heading_rad-zeroRadians;
+        double heading=data.heading_rad-startHeadingRadians;
         return Math.atan2(Math.sin(heading), Math.cos(heading));
     }
 
-    /** Changes only the software reference; does not restart calibration while driving. */
-    public void zeroHeading() {
-        if (valid) {
-            zeroRadians=data.heading_rad;
+    /** Captures the current sample exactly once, when the driver presses START. */
+    public void captureStartHeading() {
+        if (Double.isFinite(startHeadingRadians)) {
+            throw new IllegalStateException("START heading is already locked for this OpMode.");
         }
+        if (!valid) {
+            throw new IllegalStateException(
+                    "OctoQuad not ready at START; wait for RUNNING, then re-INIT.");
+        }
+        startHeadingRadians=data.heading_rad;
     }
 
     public boolean isValid() {

@@ -81,21 +81,34 @@ public final class TeleopDriveCommand extends CommandBase {
     @Override
     public void execute() {
         try {
-            double limit=outputScale == null ? 1.0 : outputScale.getAsDouble();
+            double limit;
+            if (outputScale == null) {
+                limit=1.0;
+            } else {
+                limit=outputScale.getAsDouble();
+            }
             if (!Double.isFinite(limit) || limit < 0.0 || limit > 1.0) {
                 throw new IllegalArgumentException("output scale must be finite and in [0, 1]");
             }
             double forwardValue=applyDeadband(forward.getAsDouble())*scale;
             double strafeValue=applyDeadband(strafe.getAsDouble())*scale;
             double turnValue=applyDeadband(turn.getAsDouble())*scale;
-            double heading=headingRadians == null ? 0.0 : headingRadians.getAsDouble();
+            double heading;
+            if (headingRadians == null) {
+                heading=0.0;
+            } else {
+                heading=headingRadians.getAsDouble();
+            }
             if (!Double.isFinite(heading)) {
                 drive.stop();
                 return;
             }
-            WheelPowers powers=headingRadians == null
-                    ? MecanumMixer.mix(forwardValue, strafeValue, turnValue)
-                    : MecanumMixer.mixFieldCentric(forwardValue, strafeValue, turnValue, heading);
+            WheelPowers powers;
+            if (headingRadians == null) {
+                powers=MecanumMixer.mix(forwardValue, strafeValue, turnValue);
+            } else {
+                powers=MecanumMixer.mixFieldCentric(forwardValue, strafeValue, turnValue, heading);
+            }
             drive.drive(new WheelPowers(
                     powers.frontLeft*limit, powers.frontRight*limit,
                     powers.backLeft*limit, powers.backRight*limit));

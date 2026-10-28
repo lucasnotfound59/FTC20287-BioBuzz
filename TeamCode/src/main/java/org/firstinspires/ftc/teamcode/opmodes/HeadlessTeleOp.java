@@ -9,11 +9,10 @@ import org.firstinspires.ftc.teamcode.framework.command.CommandScheduler;
 import org.firstinspires.ftc.teamcode.robot.RobotConfig;
 import org.firstinspires.ftc.teamcode.robot.RobotHardware;
 
-/** Field-centric mecanum drive using the OctoQuad MK2 localizer's IMU heading. */
+/** Mecanum translation stays relative to the direction the robot faced at START. */
 @TeleOp(name="20287 Headless TeleOp", group="BIOBUZZ")
 public final class HeadlessTeleOp extends CommandOpMode {
     private OctoQuadHeadingSubsystem heading;
-    private boolean previousY;
 
     @Override
     protected void initialize(CommandScheduler scheduler) throws InterruptedException {
@@ -27,36 +26,44 @@ public final class HeadlessTeleOp extends CommandOpMode {
                 () -> gamepad1.left_stick_x,
                 () -> gamepad1.right_stick_x,
                 RobotConfig.DRIVE_DEADBAND,
-                () -> gamepad1.left_bumper
-                        ? Math.min(RobotConfig.SLOW_DRIVE_POWER_SCALE, RobotConfig.DRIVE_POWER_SCALE)
-                        : RobotConfig.DRIVE_POWER_SCALE,
+                () -> {
+                    if (gamepad1.left_bumper) {
+                        return Math.min(RobotConfig.SLOW_DRIVE_POWER_SCALE, RobotConfig.DRIVE_POWER_SCALE);
+                    } else {
+                        return RobotConfig.DRIVE_POWER_SCALE;
+                    }
+                },
                 heading::getHeadingRadians));
 
         while (opModeInInit() && !isStopRequested()) {
             heading.periodic();
             telemetry.addData("OctoQuad", heading.getStatus());
-            telemetry.addLine("Keep robot still for calibration; point forward before START.");
-            telemetry.addLine("Left stick: field translation | Right X: turn | LB: slow | Y: zero");
+            telemetry.addLine("Keep still; wait for RUNNING. Face your forward direction at START.");
+            telemetry.addLine("START locks forward for the whole run | Right X: turn | LB: slow");
             telemetry.update();
             sleep(50);
         }
-        previousY=gamepad1.y;
+    }
+
+    @Override
+    protected void onStart() {
+        heading.periodic();
+        heading.captureStartHeading();
     }
 
     @Override
     protected void onLoop() {
-        boolean currentY=gamepad1.y;
-        if (currentY && !previousY) {
-            heading.zeroHeading();
-        }
-        previousY=currentY;
-
         telemetry.addData("OctoQuad", heading.getStatus());
-        telemetry.addData("Drive", !heading.isValid() ? "STOPPED: heading unavailable"
-                : gamepad1.left_bumper ? "Field / Slow" : "Field / Normal");
-        telemetry.addData("Heading deg", Math.toDegrees(heading.getHeadingRadians()));
+        if (!heading.isValid()) {
+            telemetry.addData("Drive", "STOPPED: heading unavailable");
+        } else if (gamepad1.left_bumper) {
+            telemetry.addData("Drive", "START reference / Slow");
+        } else {
+            telemetry.addData("Drive", "START reference / Normal");
+        }
+        telemetry.addData("Rotation from START deg", Math.toDegrees(heading.getHeadingRadians()));
         telemetry.addData("CRC errors", heading.getBadCrcPackets());
-        telemetry.addLine("Y: current front becomes field forward | LB: slow");
+        telemetry.addLine("Stick directions stay relative to START | LB: slow");
         telemetry.update();
     }
 }

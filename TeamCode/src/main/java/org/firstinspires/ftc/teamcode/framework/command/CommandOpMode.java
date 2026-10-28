@@ -7,6 +7,10 @@ public abstract class CommandOpMode extends LinearOpMode {
     /** Assemble hardware and bind commands; do not start motion during INIT. */
     protected abstract void initialize(CommandScheduler scheduler) throws InterruptedException;
 
+    /** Runs once after START, before any scheduled command can move the robot. */
+    protected void onStart() throws InterruptedException {
+    }
+
     /** Optional OpMode work after the scheduler, such as telemetry. */
     protected void onLoop() {
     }
@@ -21,6 +25,7 @@ public abstract class CommandOpMode extends LinearOpMode {
             if (isStopRequested() || Thread.currentThread().isInterrupted()) {
                 return;
             }
+            onStart();
             while (opModeIsActive() && !isStopRequested()
                     && !Thread.currentThread().isInterrupted()) {
                 scheduler.run();
