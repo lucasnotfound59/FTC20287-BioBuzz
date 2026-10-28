@@ -3,11 +3,11 @@ package org.firstinspires.ftc.teamcode.tests;
 import com.qualcomm.hardware.digitalchickenlabs.OctoQuad;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import org.firstinspires.ftc.teamcode.robot.RobotConfig;
 
 /** Sensor-only diagnostics: heading, calibration status, CRCs and all eight encoder counts. */
 @TeleOp(name="TEST - OctoQuad", group="Testing")
 public final class OctoQuadTest extends LinearOpMode {
+    private static final String OCTOQUAD_NAME = "octoquad";
     private final OctoQuad.LocalizerDataBlock localizer=new OctoQuad.LocalizerDataBlock();
     private final OctoQuad.EncoderDataBlock encoders=new OctoQuad.EncoderDataBlock();
     private OctoQuad octoquad;
@@ -22,7 +22,7 @@ public final class OctoQuadTest extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        octoquad=hardwareMap.get(OctoQuad.class, RobotConfig.OCTOQUAD_NAME);
+        octoquad=hardwareMap.get(OctoQuad.class, OCTOQUAD_NAME);
         if (octoquad.getChipId() != OctoQuad.OCTOQUAD_CHIP_ID) {
             throw new IllegalStateException("OctoQuad chip ID mismatch; check I2C wiring.");
         }
@@ -87,7 +87,7 @@ public final class OctoQuadTest extends LinearOpMode {
         }
 
         telemetry.clearAll();
-        telemetry.addData("Hardware name", RobotConfig.OCTOQUAD_NAME);
+        telemetry.addData("Hardware name", OCTOQUAD_NAME);
         telemetry.addData("Firmware", firmware);
         if (allowButtons) {
             telemetry.addData("Phase", "RUNNING TEST");
