@@ -26,5 +26,8 @@ android {
 
 dependencies {
     implementation project(':FtcRobotController')
-    implementation 'org.solverslib:core:0.3.4'
+    implementation('org.solverslib:core:0.3.4') {
+        // The app supplies FTC SDK 12.0; do not import SolversLib's strict SDK 11.1 constraints.
+        exclude group: 'org.firstinspires.ftc'
+    }
 }
