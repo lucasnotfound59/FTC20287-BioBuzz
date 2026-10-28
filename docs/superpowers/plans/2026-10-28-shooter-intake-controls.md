@@ -1,5 +1,7 @@
 # Shooter and Intake controls
 
+> Historical document: FTC Knowledge Bank was removed from this project on 2026-10-28. FTCKB integration steps, rules, and check commands below are retained as history and no longer apply.
+
 Goal: complete the single-motor Shooter and add a single-motor Intake in the existing SolversLib 0.3.4 architecture, then bind both in the headless TeleOp.
 
 Implementation:

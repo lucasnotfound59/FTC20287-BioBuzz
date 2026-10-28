@@ -1,9 +1,12 @@
 package org.firstinspires.ftc.teamcode.commands;
 
 import com.seattlesolvers.solverslib.command.CommandBase;
-import java.util.function.DoubleSupplier;
+
 import org.firstinspires.ftc.teamcode.subsystems.Drive;
-import org.firstinspires.ftc.teamcode.subsystems.OctoQuadSubsystem;
+import org.firstinspires.ftc.teamcode.subsystems.Localizer;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.function.DoubleSupplier;
 
 /** Continuously sends live driver inputs to the drivetrain. */
 public final class DriveCommand extends CommandBase {
@@ -11,63 +14,53 @@ public final class DriveCommand extends CommandBase {
     private final DoubleSupplier forward;
     private final DoubleSupplier strafe;
     private final DoubleSupplier turn;
-    private final OctoQuadSubsystem heading;
+    private final DoubleSupplier heading;
     private final double deadband;
-    private final DoubleSupplier outputLimit;
+    private final double turnLimit;
 
-    public DriveCommand(Drive drive, DoubleSupplier forward,
+    /** Robot-centric drive; no heading sensor is required. */
+    public DriveCommand(@NotNull final Drive drive, DoubleSupplier forward,
                         DoubleSupplier strafe, DoubleSupplier turn,
-                        OctoQuadSubsystem heading, double deadband) {
-        this(drive, forward, strafe, turn, heading, deadband, () -> 1.0);
+                        double deadband, double turnLimit) {
+        this(drive, forward, strafe, turn, () -> 0.0, deadband, turnLimit);
     }
 
-    public DriveCommand(Drive drive, DoubleSupplier forward,
+    public DriveCommand(@NotNull final Drive drive, DoubleSupplier forward,
                         DoubleSupplier strafe, DoubleSupplier turn,
-                        OctoQuadSubsystem heading, double deadband, DoubleSupplier outputLimit) {
-        if (drive == null || forward == null || strafe == null || turn == null
-                || heading == null || outputLimit == null) {
-            throw new IllegalArgumentException("drive and input suppliers cannot be null");
-        }
-        if (!Double.isFinite(deadband) || deadband < 0.0 || deadband >= 1.0) {
-            throw new IllegalArgumentException("deadband must be in [0, 1)");
-        }
+                        Localizer localizer, double deadband, double turnLimit) {
+        this(drive, forward, strafe, turn, localizer::getHeadingRadians, deadband, turnLimit);
+        addRequirements(localizer);
+    }
+
+    private DriveCommand(@NotNull final Drive drive, DoubleSupplier forward,
+                         DoubleSupplier strafe, DoubleSupplier turn,
+                         DoubleSupplier heading, double deadband, double turnLimit) {
         this.drive = drive;
         this.forward = forward;
         this.strafe = strafe;
         this.turn = turn;
         this.heading = heading;
         this.deadband = deadband;
-        this.outputLimit=outputLimit;
-        addRequirements(drive, heading);
+        this.turnLimit = turnLimit;
+        addRequirements(drive);
     }
 
     @Override
     public void execute() {
-        try {
-            double headingRadians=heading.getHeadingRadians();
-            if (!Double.isFinite(headingRadians)) {
-                drive.stop();
-                return;
-            }
-
-            double fieldForward=applyDeadband(forward.getAsDouble());
-            double fieldStrafe=applyDeadband(strafe.getAsDouble());
-            double turnValue=applyDeadband(turn.getAsDouble());
-            double cosine=Math.cos(headingRadians);
-            double sine=Math.sin(headingRadians);
-            double robotForward=fieldForward*cosine-fieldStrafe*sine;
-            double robotStrafe=fieldForward*sine+fieldStrafe*cosine;
-            drive.drive(robotForward, robotStrafe, turnValue, outputLimit.getAsDouble());
-        } catch (RuntimeException | Error failure) {
-            try {
-                drive.stop();
-            } catch (RuntimeException | Error stopFailure) {
-                if (stopFailure != failure) {
-                    failure.addSuppressed(stopFailure);
-                }
-            }
-            throw failure;
+        double headingRadians = heading.getAsDouble();
+        if (!Double.isFinite(headingRadians)) {
+            drive.stop();
+            return;
         }
+
+        double forwardValue = applyDeadband(forward.getAsDouble());
+        double strafeValue = applyDeadband(strafe.getAsDouble());
+        double turnValue = applyDeadband(turn.getAsDouble()) * turnLimit;
+        double cosine = Math.cos(headingRadians);
+        double sine = Math.sin(headingRadians);
+        double robotForward = forwardValue * cosine - strafeValue * sine;
+        double robotStrafe = forwardValue * sine + strafeValue * cosine;
+        drive.drive(robotForward, robotStrafe, turnValue);
     }
 
     @Override
@@ -76,9 +69,6 @@ public final class DriveCommand extends CommandBase {
     }
 
     private double applyDeadband(double input) {
-        if (!Double.isFinite(input)) {
-            throw new IllegalArgumentException("driver input must be finite");
-        }
         if (Math.abs(input) <= deadband) {
             return 0.0;
         }

@@ -7,7 +7,7 @@ Team-owned FTC code for BIOBUZZ. The command architecture uses SolversLib's offi
 - `teleops/`: Driver Station TeleOp entry points. `FieldCentricDrive` extends SolversLib's `CommandOpMode` directly and installs `DriveCommand` as the drivetrain default.
 - `autos/`: autonomous OpModes and autonomous command compositions.
 - `subsystems/`: hardware ownership. `Drive` owns the four drive motors; `Shooter` and `Intake` each own one motor; `OctoQuadSubsystem` provides a validated heading relative to the direction captured at START.
-- `commands/`: high-level actions. `DriveCommand` reads live driver axes; `ShootCommand` and `IntakeCommand` each read a live button supplier and require only their own mechanism.
+- `commands/`: `DriveCommand` reads live driver axes. `BaseDriveTeleOp.run()` handles shooter and intake buttons directly through `GamepadConfig`.
 - `tests/`: Driver Station diagnostic OpModes.
 
 Subsystems encapsulate hardware. Commands declare their subsystem requirements with `addRequirements(...)`, implement the command lifecycle, and use subsystem methods instead of writing hardware directly. SolversLib's `CommandOpMode` runs its scheduler and handles scheduler reset when the OpMode ends.
@@ -34,7 +34,7 @@ Configure a motor named `shooter` and a motor named `intake`. `Shooter.SHOOT_POW
 
 The subsystem APIs are `shooter.shoot()`, `intake.intake()`, `setPower(double)`, `stop()` and `getCommandedPower()`. Power is clamped to [-1,1]; nonfinite inputs throw after attempting to stop. `getCommandedPower()` and the TeleOp telemetry report the last successfully written command, not motor speed or a confirmation of ball movement.
 
-Defaults are installed during INIT but execute only after START. A/B are read live by separate commands so each motor responds independently, including simultaneous use. Releasing a button or interrupting its command stops that motor. Verify both release controls, both together and STOP on hardware before use.
+The drive default command is installed during INIT and executes after START. `BaseDriveTeleOp.run()` reads the shared `GamepadConfig` each cycle: left bumper runs the intake and right bumper runs the shooter. The two buttons work independently and together; releasing either button stops its motor. `end()` stops both mechanisms on STOP.
 
 The current drive names are `frontLeft`, `frontRight`, `backLeft` and `backRight`. Raise the wheels and verify the individual wheel directions, a 90/180-degree turn followed by left/forward-left joystick input, LB slow/release and STOP before floor driving. Software tests and compilation do not prove deployment, sensor calibration or physical robot behavior.
 

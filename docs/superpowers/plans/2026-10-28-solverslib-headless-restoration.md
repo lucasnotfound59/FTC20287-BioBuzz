@@ -1,5 +1,7 @@
 # Restore fixed-reference headless drive in SolversLib
 
+> Historical document: FTC Knowledge Bank was removed from this project on 2026-10-28. FTCKB integration steps, rules, and check commands below are retained as history and no longer apply.
+
 Goal: retain the current SolversLib 0.3.4 architecture and restore the driver's fixed START-frame mecanum controls.
 
 Evidence: the exact official `core-0.3.4-sources.jar` CommandOpMode calls initialize, initialize_loop, run and end; it never calls preRun. Its reset replaces the scheduler without stopping motors. The unmodified Gradle baseline also fails because SolversLib's transitive SDK 11.1 constraints conflict with the app's SDK 12.0.

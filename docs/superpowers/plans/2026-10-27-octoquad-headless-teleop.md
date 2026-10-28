@@ -1,5 +1,7 @@
 # OctoQuad Headless TeleOp Implementation Plan
 
+> Historical document: FTC Knowledge Bank was removed from this project on 2026-10-28. FTCKB integration steps, rules, and check commands below are retained as history and no longer apply.
+
 **Goal:** Add field-centric mecanum TeleOp using OctoQuad MK2 heading.
 
 **Architecture:** An OctoQuad heading subsystem owns bulk reads and validates CRC/status. The existing drive command accepts an optional heading supplier and uses pure field-to-robot mixing. A new CommandOpMode binds gamepad controls and reports heading health.

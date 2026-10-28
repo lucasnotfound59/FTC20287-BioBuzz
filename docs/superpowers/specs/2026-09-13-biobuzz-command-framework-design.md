@@ -1,5 +1,7 @@
 # BIOBUZZ 2026–2027 Command Framework Design
 
+> Historical document: FTC Knowledge Bank was removed from this project on 2026-10-28. FTCKB integration steps, rules, and check commands below are retained as history and no longer apply.
+
 ## Goal
 
 Build a small, team-owned command-based framework under `TeamCode` for FTC team 20287's 2026–2027 BIOBUZZ season. The framework must remain understandable to student programmers, avoid an unmaintained FTCLib runtime dependency, and include a minimal mecanum TeleOp that proves the architecture works without claiming unverified robot behavior.

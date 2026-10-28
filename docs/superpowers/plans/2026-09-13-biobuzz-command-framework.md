@@ -1,5 +1,7 @@
 # BIOBUZZ Command Framework Implementation Plan
 
+> Historical document: FTC Knowledge Bank was removed from this project on 2026-10-28. FTCKB integration steps, rules, and check commands below are retained as history and no longer apply.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Integrate the pinned FTC Knowledge Bank and build a small, team-owned command framework plus a safe, minimal mecanum TeleOp under `TeamCode`.
