@@ -11,13 +11,13 @@ public final class Localizer extends SubsystemBase {
     private final OctoQuad octoQuad;
     private final OctoQuad.LocalizerDataBlock data = new OctoQuad.LocalizerDataBlock();
     private boolean valid;
-    private double startHeadingRadians = Double.NaN;
+    private double startHeadingRadians = Double.NaN; // needs to be measured
     private int badCrcPackets;
 
     public Localizer(@NotNull final HardwareMap hMap) {
-        octoQuad = hMap.get(OctoQuad.class, "octoquad");
+        this.octoQuad = hMap.get(OctoQuad.class, "octoquad");
         // Recalibrate local IMU state without changing saved pod geometry or heading scale.
-        octoQuad.resetLocalizerAndCalibrateIMU();
+        this.octoQuad.resetLocalizerAndCalibrateIMU();
     }
 
     @Override

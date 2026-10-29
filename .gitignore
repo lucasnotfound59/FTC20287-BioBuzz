@@ -74,6 +74,10 @@ fastlane/readme.md
 vcs.xml
 .worktrees/
 
+# Local robot tuning captures
+/shooter-data/
+/scripts/__pycache__/
+
 # lint
 lint/intermediates/
 lint/generated/

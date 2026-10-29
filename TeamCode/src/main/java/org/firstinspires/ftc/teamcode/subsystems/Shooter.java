@@ -12,6 +12,12 @@ import org.jetbrains.annotations.NotNull;
 public final class Shooter extends SubsystemBase {
     // Default velocity in encoder ticks per second; tune in ConfigTeleOp.
     public static double SHOOT_VEL = 1560;
+    // Copy measured values from Shooter PIDF Tuner, then opt in. Zeros are NOT tuned values.
+    public static boolean USE_TUNED_PIDF = false;
+    public static double VELOCITY_P = 0;
+    public static double VELOCITY_I = 0;
+    public static double VELOCITY_D = 0;
+    public static double VELOCITY_F = 0;
     private final DcMotorEx shooter;
     private double commandedVel;
 
@@ -19,8 +25,15 @@ public final class Shooter extends SubsystemBase {
         shooter = hMap.get(DcMotorEx.class, "shooter");
         shooter.setDirection(DcMotorSimple.Direction.FORWARD);
         shooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        shooter.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
+        shooter.setVelocity(0.0);
+        shooter.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        if (USE_TUNED_PIDF) {
+            validateCoefficient(VELOCITY_P);
+            validateCoefficient(VELOCITY_I);
+            validateCoefficient(VELOCITY_D);
+            validateCoefficient(VELOCITY_F);
+            shooter.setVelocityPIDFCoefficients(VELOCITY_P, VELOCITY_I, VELOCITY_D, VELOCITY_F);
+        }
         stop();
     }
 
@@ -34,12 +47,29 @@ public final class Shooter extends SubsystemBase {
     }
 
     public void stop() {
-        shooter.setPower(0.0);
+        // Keep velocity commands consistent: SDK power caching can suppress a repeated setPower(0).
+        shooter.setVelocity(0.0);
         commandedVel = 0.0;
     }
 
     /** Last successfully written command, not an RPM or motion measurement. */
     public double getCommandedVel() {
         return commandedVel;
+    }
+
+    private static void validateCoefficient(double value) {
+        if (!Double.isFinite(value) || value < 0 || value > 32767) {
+            throw new IllegalArgumentException("Shooter PIDF must be finite and in [0, 32767]");
+        }
+    }
+
+    public double tuningVel(){
+        return shooter.getVelocity();
+    }
+    public double tuningPower(){
+        return shooter.getPower();
+    }
+    public double tuningPos(){
+        return shooter.getTargetPosition();
     }
 }
